@@ -1,0 +1,10 @@
+Compiling:
+
+You need to have HADOOP_HOME set to the root directory of Hadoop on your computer.
+CASACADING_HOME must point to a directory containing the cascading jar and cascading jar dependencies.
+
+This source code is adapted from Rapleaf's production code. Rapleaf's version uses particular datastores and that dependency has been removed for 
+this release.
+
+
+Any questions or feedback can be directed to nathan.marz@gmail.com

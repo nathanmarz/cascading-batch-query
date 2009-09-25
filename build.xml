@@ -1,0 +1,122 @@
+<project name="cascading-batch-query" default="jar">
+  <property name="src.dir"  location="${basedir}/src/java"/>
+  <property name="lib.dir" value="${basedir}/lib"/>
+  <property name="final.name" value="cascading-batch-query"/>
+  <property name="javac.deprecation" value="true"/>
+  
+  <property name="build.dir" location="${basedir}/build"/>
+  <property name="build.classes" location="${build.dir}/classes"/>
+  <property name="build.test" location="${build.dir}/test"/>
+  <property name="build.encoding" value="ISO-8859-1"/>
+
+  <property name="test.junit.output.format" value="plain"/>
+  <property name="test.timeout" value="600000"/>
+
+  <property name="src.test" location="test/java"/>
+      
+  <property environment="env" />
+
+  <property name="env.HADOOP_HOME" value="/usr/lib/hadoop-0.20"/>
+  <property name="env.HADOOP_CONF_DIR" value="/etc/hadoop-0.20/conf"/>
+
+  <fileset id="lib.jars" dir="${basedir}" includes="lib/*.jar"/>
+  <fileset id="shared.jars" dir="${env.CASCADING_HOME}" includes="*.jar" />
+  <fileset id="hadoop.jar" dir="${env.HADOOP_HOME}">
+    <include name="hadoop-*core.jar"/>
+  </fileset>
+  <fileset id="hadoop.lib" dir="${env.HADOOP_HOME}/lib" includes="**/*.jar"/>
+  <path id="classpath.id">
+    <pathelement location="${env.HADOOP_HOME}"/>
+    <pathelement location="${basedir}/build"/>
+    <pathelement location="${env.HADOOP_CONF_DIR}"/>
+    <fileset refid="hadoop.jar"/>
+    <fileset refid="hadoop.lib"/>
+    <fileset refid="lib.jars"/>
+    <fileset refid="shared.jars" />
+  </path>
+
+  <!-- set up the test classpath-->
+  <fileset id="dev.shared.jars" dir="${env.JARS_TEST_HOME}" includes="*.jar"/>
+  <path id="test.build.classpath.id">
+    <path refid="classpath.id"/>
+    <fileset refid="dev.shared.jars"/>
+    <pathelement location="build/${final.name}.jar"/>
+  </path>
+
+  <path id="test.run.classpath.id">
+    <path refid="test.build.classpath.id"/>
+    <pathelement location="${build.test}"/>
+  </path>
+
+  <target name="classpath">
+    <property name="cp" refid="test.build.classpath.id"/>
+    <echo message="Classpath: ${cp}"/>
+  </target>
+  
+  <target name="init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.classes}"/>
+  </target>
+  
+  <target name="init-test">
+    <mkdir dir="${build.dir}/test"/>
+    <mkdir dir="${build.dir}/test/data"/>    
+    <mkdir dir="${build.dir}/test/data/sandbox"/>    
+    <mkdir dir="${build.test}"/>
+  </target>
+  
+  <target name="compile" depends="init">
+   <javac
+    encoding="${build.encoding}"
+    srcdir="${src.dir};"
+    includes="**/*.java"
+    destdir="${build.classes}"
+    debug="true"
+    deprecation="${javac.deprecation}">
+     <classpath refid="classpath.id"/>
+   </javac>
+  </target>
+
+  <target name="jar" depends="compile" description="Build jar">
+    <jar jarfile="${build.dir}/${final.name}.jar" basedir="${build.classes}/" />
+  </target>
+
+  <target name="clean" description="Destroy all build artifacts">
+    <delete dir="${build.dir}"/>
+  </target>
+
+  <target name="test" description="Runs all tests" depends="jar,init-test,compile-test">
+    <delete dir="build/test/log"/>
+    <mkdir dir="build/test/log"/>
+    <junit
+      printsummary="yes" showoutput="${test.output}" 
+      haltonfailure="no" fork="yes" maxmemory="512m"
+      errorProperty="tests.failed" failureProperty="tests.failed"
+      timeout="${test.timeout}">
+      
+      <sysproperty key="build.test" value="${build.test}"/>
+      <classpath refid="test.run.classpath.id"/>
+      <formatter type="${test.junit.output.format}" />
+      <batchtest todir="build/test/log" unless="testcase">
+        <fileset dir="${src.test}" includes="**/Test*.java" />
+      </batchtest>
+      <batchtest todir="build/test/log" if="testcase">
+        <fileset dir="${src.test}" includes="**/${testcase}.java"/>
+      </batchtest>
+    </junit>
+    <fail if="tests.failed">Tests failed!</fail>
+  </target>  
+
+  <target name="compile-test" depends="init-test,jar">
+    <javac
+      encoding="${build.encoding}"
+      srcdir="test/java;"
+      includes="**/*.java"
+      destdir="${build.test}"
+      debug="true"
+      deprecation="${javac.deprecation}">
+        <classpath refid="test.build.classpath.id"/>
+    </javac>
+  </target>
+
+</project>
