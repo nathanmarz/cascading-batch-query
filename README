@@ -7,4 +7,12 @@ This source code is adapted from Rapleaf's production code. Rapleaf's version us
 this release.
 
 
+Testing batch queries:
+
+Distributed cache does not work in local mode in Hadoop. For this reason, the Relevance class has an alternate code path for the purposes of writing
+unit tests that utilize batch queries. In order to activate "test mode", add this code to your test:
+
+Relevance.TEST_MODE = true;
+
+
 Any questions or feedback can be directed to nathan.marz@gmail.com
